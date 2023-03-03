@@ -1,6 +1,6 @@
-import { StatusBar } from 'expo-status-bar';
-import {StyleSheet, TextInput, View, Text, Pressable} from 'react-native';
-import { IconComponentProvider, Icon } from "@react-native-material/core";
+import {StatusBar} from 'expo-status-bar';
+import {Platform, Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
+import {Icon, IconComponentProvider} from "@react-native-material/core";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import {Component} from "react";
 
@@ -15,9 +15,12 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      counter: null,
+      handle: null,
       tags: ['Cashew','Fortnite','React Native'],
-      header: {
-        name: '',
+      dropdown: {
+        open: false,
+
       },
       running: {
         name: '',
@@ -25,30 +28,113 @@ class App extends Component {
       item: '21',
       tracked: [
         {
+          tag_id: 0,
+          name: 'Cashew is best',
+          start: new Date(),
+          end: new Date(2023, 2, 4),
+        },
+        {
+          tag_id: 1,
+          name: 'Fortnite Lets Play',
+          start: new Date(),
+          end: new Date(2023, 2, 4),
+        },
+        {
+          tag_id: 2,
+          name: 'Center Text in Header',
+          start: new Date(),
+          end: new Date(2023, 0, 3),
+        },
+        {
           tag_id: 2,
           name: 'Cashew is best',
-          seconds: 80000000,
+          start: new Date(),
+          end: new Date(2023, 2, 4),
         }
       ]
     }
   }
 
-  startTimer = () => {
+  startStopTimer = () => {
+    if(!this.state.handle) {
+      this.setState({
+        running: {
+          ...this.state.running,
+          start: new Date(),
+          tag_id: 1,
+        }
+      })
+
+      const handle = setInterval(this.updateTimer, 200)
+
+      this.setState({
+        handle: handle
+      })
+
+      //stops the timer
+    } else {
+      this.setState({
+        tracked: [...this.state.tracked,
+          {
+            ...this.state.running,
+            end: new Date()
+          }
+        ]
+      })
+      clearInterval(this.state.handle)
+      this.setState({
+        running: {
+          name : ''
+        },
+        handle: null,
+      })
+      this.textInput.clear()
+    }
+
+  }
+
+  updateTimer = () => {
     this.setState({
-      running: {
-        ...this.state.header,
-        start: new Date(),
-      }
+      counter: this.getTimeDifference(this.state.running.start, Date.now())
     })
-    this.textInput.clear()
   }
 
   handleChange = (e) => {
     this.setState({
-      header: {
+      running: {
+        ...this.state.running,
         name : e
       }
     });
+  }
+
+  openSelect = () => {
+
+  }
+
+
+
+// Helper function to pad a number with leading zeros
+  padZero = (number) => {
+    return number.toString().padStart(2, '0');
+  }
+
+  getTimeDifference = (timestamp1, timestamp2) => {
+
+    // Calculate the difference in milliseconds
+    const diffInMilliseconds = Math.abs(timestamp2 - timestamp1);
+
+    // Calculate the difference in seconds, minutes, and hours
+    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+
+    // Calculate the remaining seconds and minutes after calculating the hours
+    const remainingMinutes = diffInMinutes % 60;
+    const remainingSeconds = diffInSeconds % 60;
+
+    // Format the result as HH:mm:ss
+    return `${this.padZero(diffInHours)}:${this.padZero(remainingMinutes)}:${this.padZero(remainingSeconds)}`;
   }
 
   render() {
@@ -57,13 +143,46 @@ class App extends Component {
           <View style={styles.container}>
             <View style={styles.header}>
               <TextInput style={styles.textInput} ref={input => { this.textInput = input }} onChangeText={this.handleChange} placeholderTextColor={placeholderText} placeholder={'What are you working on?'}/>
-              <Icon name="folder-open" size={32} color="grey" style={styles.folder}/>
-              <Pressable style={styles.start} onPress={this.startTimer}>
-                <Icon name="play" size={32} color="white"/>
+              {this.state.handle ? <Text>{this.state.counter}</Text> : ''}
+
+              <Pressable style={styles.folder} onPress={this.openSelect}>
+                <Icon name="folder-open" size={36} color="grey" />
+              </Pressable>
+              <Pressable style={styles.start} onPress={this.startStopTimer}>
+                {this.state.handle ? <Icon name="pause" size={32} color="white"/> : <Icon name="play" size={32} color="white"/>}
               </Pressable>
             </View >
+            <Text>
+              {"\n"}{this.state.running.name}
+            </Text>
+            <View>
+              {this.state.tracked.map((item, i) =>
+                  <View style={styles.trackedItem} key={i}>
+                    <Text style={styles.doneText}>
+                      {item.name}
+                    </Text>
+                    <Text>
+                      {this.getTimeDifference(item.start, item.end)}
+                    </Text>
+                    <Text style={styles.tags}>
+                      {this.state.tags[item.tag_id]}
+                    </Text>
+                  </View>
+              )}
+            </View>
+
 
             <StatusBar backgroundColor={secondary}  />
+            <Text style={{
+              color: 'white',
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              fontSize: 20,
+              margin: 10
+            }}>
+              ToggaTrack
+            </Text>
           </View>
         </IconComponentProvider>
     );
@@ -77,33 +196,63 @@ const styles = StyleSheet.create({
     backgroundColor: primary,
     width: '100%',
     flex: 1,
-    alignItems: 'center',
+  },
+  doneText: {
+    maxWidth: '33%',
+  },
+  tags: {
+    backgroundColor: 'lightgreen',
+    borderRadius: 6,
+    height: '60%',
+    textAlignVertical: 'center',
+    paddingHorizontal: 5,
   },
   text: {
     color: 'white'
   },
   textInput: {
-    padding: 0,
+    flex: 1,
     width: '65%',
     left: 0,
     height: '100%',
     color: 'black',
-    fontSize: 20,
+    fontSize: 22,
+  },
+  trackedItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: "center",
+    width: '100%',
+    height: 50,
+    backgroundColor: 'lightgray',
+    padding: 0,
+    marginTop: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: "center",
-    height: 100,
+    height: 70,
     width: '100%',
     backgroundColor: 'white',
+    padding: 0,
+    marginTop: 30,
   },
   folder: {
-    width: '10%',
+    width: '14%',
+    height: '80%',
+    justifyContent: 'center',
+    alignItems: "center",
+    marginRight: 10,
   },
   start: {
-    width: '14%',
+    width: 50,
+    height: '70%',
     margin: 'auto',
     backgroundColor: secondary,
-  }
+    borderRadius: 36,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: "center",
+  },
 });
