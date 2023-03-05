@@ -20,10 +20,10 @@ class App extends Component {
       tags: ['Cashew','Fortnite','React Native'],
       dropdown: {
         open: false,
-
       },
       running: {
         name: '',
+        tag_id: 1,
       },
       item: '21',
       tracked: [
@@ -60,8 +60,10 @@ class App extends Component {
       this.setState({
         running: {
           ...this.state.running,
-          start: new Date(),
-          tag_id: 1,
+          start: new Date()
+        },
+        dropdown: {
+          open: false,
         }
       })
 
@@ -79,12 +81,16 @@ class App extends Component {
             ...this.state.running,
             end: new Date()
           }
-        ]
+        ],
+        dropdown: {
+          open: false,
+        }
       })
       clearInterval(this.state.handle)
       this.setState({
         running: {
-          name : ''
+          name : '',
+          tag_id: this.state.running.tag_id
         },
         handle: null,
       })
@@ -109,10 +115,22 @@ class App extends Component {
   }
 
   openSelect = () => {
-
+    this.setState({
+      dropdown: {
+        ...this.state.dropdown,
+        open: !this.state.dropdown.open,
+      }
+    })
   }
 
-
+  setTag = (id) => {
+    this.setState({
+      running: {
+        ...this.state.running,
+        tag_id: id,
+      }
+    })
+  }
 
 // Helper function to pad a number with leading zeros
   padZero = (number) => {
@@ -141,6 +159,24 @@ class App extends Component {
     return (
         <IconComponentProvider IconComponent={MaterialCommunityIcons}>
           <View style={styles.container}>
+
+              {this.state.dropdown.open ?
+                  <View style={styles.dropDown}>
+                    {this.state.tags.map((item, i) =>
+                        <Pressable onPress={() => this.setTag(i)} key={i} style={styles.dropDownItem}>
+                          <Text style={{
+                            backgroundColor: this.state.running.tag_id === i ? 'lightgreen' : 'white',
+                            height: '100%',
+                            textAlignVertical: 'center',
+                            borderRadius: 4,
+                          }}>
+                            {item}
+                          </Text>
+                        </Pressable>
+                    )}
+                  </View>: ''
+              }
+
             <View style={styles.header}>
               <TextInput style={styles.textInput} ref={input => { this.textInput = input }} onChangeText={this.handleChange} placeholderTextColor={placeholderText} placeholder={'What are you working on?'}/>
               {this.state.handle ? <Text>{this.state.counter}</Text> : ''}
@@ -153,7 +189,7 @@ class App extends Component {
               </Pressable>
             </View >
             <Text>
-              {"\n"}{this.state.running.name}
+              {"\n"}
             </Text>
             <View>
               {this.state.tracked.map((item, i) =>
@@ -192,6 +228,21 @@ class App extends Component {
 export default App
 
 const styles = StyleSheet.create({
+  dropDown: {
+    position: "absolute",
+    top: 80,
+    right: 50,
+    height: 120,
+    zIndex: 4,
+    width: '30%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+  },
+  dropDownItem: {
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 4,
+  },
   container: {
     backgroundColor: primary,
     width: '100%',
