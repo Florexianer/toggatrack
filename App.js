@@ -21,6 +21,8 @@ class App extends Component {
       dropdown: {
         open: false,
       },
+      filterOpen: false,
+      filter: null,
       running: {
         name: '',
         tag_id: 1,
@@ -110,6 +112,9 @@ class App extends Component {
       running: {
         ...this.state.running,
         name : e
+      },
+      dropdown: {
+        open: false
       }
     });
   }
@@ -129,6 +134,18 @@ class App extends Component {
         ...this.state.running,
         tag_id: id,
       }
+    })
+  }
+
+  openFilter = () => {
+    this.setState({
+      filterOpen: !this.state.filterOpen,
+    })
+  }
+
+  setFilter= (id) => {
+    this.setState({
+      filter: id
     })
   }
 
@@ -159,7 +176,12 @@ class App extends Component {
     return (
         <IconComponentProvider IconComponent={MaterialCommunityIcons}>
           <View style={styles.container}>
-
+            <Pressable style={styles.filter} onPress={this.openFilter}>
+              <Icon name="filter" size={36} color="grey" />
+            </Pressable>
+            {/*
+                Dropdown Tags selector
+            */}
               {this.state.dropdown.open ?
                   <View style={styles.dropDown}>
                     {this.state.tags.map((item, i) =>
@@ -176,9 +198,44 @@ class App extends Component {
                     )}
                   </View>: ''
               }
+            {/*
+                Dropdown filter
+            */}
+            {this.state.filterOpen ?
+                <View style={styles.dropDownFilter}>
+                  {this.state.tags.map((item, i) =>
+                      <Pressable onPress={() => this.setFilter(i)} key={i} style={styles.dropDownItem}>
+                        <Text style={{
+                          backgroundColor: this.state.filter === i ? 'lightgreen' : 'white',
+                          height: '100%',
+                          textAlignVertical: 'center',
+                          borderRadius: 4,
+                        }}>
+                          {item}
+                        </Text>
+                      </Pressable>
+                  )}
+                  <Pressable onPress={() => this.setFilter(null)} style={styles.dropDownItem}>
+                    <Text style={{
+                      backgroundColor: this.state.filter === null ? 'lightgreen' : 'white',
+                      height: '100%',
+                      textAlignVertical: 'center',
+                      borderRadius: 4,
+                    }}>
+                      none
+                    </Text>
+                  </Pressable>
+                </View>: ''
+            }
 
             <View style={styles.header}>
-              <TextInput style={styles.textInput} ref={input => { this.textInput = input }} onChangeText={this.handleChange} placeholderTextColor={placeholderText} placeholder={'What are you working on?'}/>
+              <TextInput style={styles.textInput} ref={input => { this.textInput = input }} onChangeText={this.handleChange} onPressOut={() => {
+                this.setState({
+                dropdown: {
+                  open: false
+                }
+              })}} placeholderTextColor={placeholderText} placeholder={'What are you working on?'}/>
+
               {this.state.handle ? <Text>{this.state.counter}</Text> : ''}
 
               <Pressable style={styles.folder} onPress={this.openSelect}>
@@ -188,11 +245,13 @@ class App extends Component {
                 {this.state.handle ? <Icon name="pause" size={32} color="white"/> : <Icon name="play" size={32} color="white"/>}
               </Pressable>
             </View >
+
             <Text>
-              {"\n"}
+              {'\n'}
             </Text>
+
             <View>
-              {this.state.tracked.map((item, i) =>
+              {this.state.tracked.filter(n => this.state.filter === null | this.state.filter === n.tag_id).map((item, i) =>
                   <View style={styles.trackedItem} key={i}>
                     <Text style={styles.doneText}>
                       {item.name}
@@ -203,6 +262,12 @@ class App extends Component {
                     <Text style={styles.tags}>
                       {this.state.tags[item.tag_id]}
                     </Text>
+                    <Pressable style={styles.folder} onPress={() => {
+                      this.state.tracked.splice(i,1)
+                      this.forceUpdate()
+                    }}>
+                      <Icon name="delete" size={36} color="#c5271f" />
+                    </Pressable>
                   </View>
               )}
             </View>
@@ -232,6 +297,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 80,
     right: 50,
+    height: 120,
+    zIndex: 4,
+    width: '30%',
+    backgroundColor: 'white',
+    borderRadius: 16,
+  },
+  dropDownFilter: {
+    position: "absolute",
+    bottom: 50,
+    left: 70,
     height: 120,
     zIndex: 4,
     width: '30%',
@@ -306,4 +381,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: "center",
   },
+  filter: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    width: 50,
+    height: 50,
+    backgroundColor: 'white',
+    borderRadius: 36,
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: "center",
+  }
 });
