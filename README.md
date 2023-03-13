@@ -7,4 +7,4 @@ to test it out use the command:
 
 > npx expo start
 
-and download the expo go app and scan the qr code to display it on your phone
+and download the expo go app, then scan the qr code to display it on your phone
